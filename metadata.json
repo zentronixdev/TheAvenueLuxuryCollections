@@ -1,0 +1,8 @@
+{
+  "name": "Remix: The Avenue (Luxury Collections)",
+  "description": "A premium, high-end digital showroom and rental experience for luxury wedding suits, blazers, and royal groom apparel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
