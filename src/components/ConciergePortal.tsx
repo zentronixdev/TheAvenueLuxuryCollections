@@ -19,14 +19,36 @@ export default function ConciergePortal({ isOpen, onClose }: ConciergePortalProp
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/booking");
-      if (!res.ok) throw new Error("Could not fetch active reservations.");
-      const data = await res.json();
-      if (data.bookings && Array.isArray(data.bookings)) {
-        setBookings(data.bookings);
+      // Fetch from local storage instead of API
+      const localDB = localStorage.getItem("the_avenue_fittings_db");
+      let storedBookings = [];
+      if (localDB) {
+        storedBookings = JSON.parse(localDB);
+      } else {
+        // Seed initial mock bookings if empty
+        storedBookings = [
+          {
+            bookingId: "AVE-MUH-7738",
+            name: "Prasanna Venkatesan",
+            preferredService: "Imperial Tamilnadu Gold-Border Sherwani - Trial",
+            fittingLocation: "flagship-chennai",
+            date: "2026-07-12",
+            time: "10:30",
+          },
+          {
+            bookingId: "AVE-REC-8902",
+            name: "Rajesh Kannan",
+            preferredService: "The Avenue Royal Navy Tuxedo Blazer - Fitting",
+            fittingLocation: "flagship-chennai",
+            date: "2026-07-15",
+            time: "14:00",
+          }
+        ];
+        localStorage.setItem("the_avenue_fittings_db", JSON.stringify(storedBookings));
       }
+      setBookings(storedBookings);
     } catch (err: any) {
-      setError(err.message || "Failed to load active fittings.");
+      setError("Failed to load active fittings from offline storage.");
     } finally {
       setLoading(false);
     }

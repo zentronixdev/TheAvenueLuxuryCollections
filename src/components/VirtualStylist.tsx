@@ -87,21 +87,24 @@ export default function VirtualStylist({ isOpen, onClose, onSelectRecommendedOut
     const loaderInterval = triggerLoaderProgress();
 
     try {
-      const response = await fetch("/api/stylist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
+      // Call live server-side Gemini endpoint in parallel with a short aesthetic loader delay
+      const [response] = await Promise.all([
+        fetch("/api/stylist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]);
 
       if (!response.ok) {
-        throw new Error(data.error || "Couture engine failed to process consultation.");
+        throw new Error("Atelier server returned an error.");
       }
 
-      setRecommendation(data);
+      const generatedRecommendation: StylistRecommendation = await response.json();
+      setRecommendation(generatedRecommendation);
     } catch (err: any) {
-      setError(err.message || "Failed to reach our virtual ateliers. Please try again.");
+      setError("Failed to generate styling advice. Please try again.");
     } finally {
       clearInterval(loaderInterval);
       setLoading(false);

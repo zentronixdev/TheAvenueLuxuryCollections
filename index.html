@@ -4,9 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Avenue | Luxury Collections</title>
+    <!-- Frontend Image Pathway & Preloads -->
+    <link rel="icon" type="image/jpeg" href="/images/Logo.jpg" />
+    <link rel="preload" href="/images/Logo.jpg" as="image" />
+    <link rel="preload" href="/images/navy_tuxedo_1783186805390.jpg" as="image" />
+    <link rel="preload" href="/images/plaid_blazer_1783186819820.jpg" as="image" />
+    <link rel="preload" href="/images/black_bandhgala_1783186834600.jpg" as="image" />
+    <link rel="preload" href="/images/beige_sherwani_1783186848369.jpg" as="image" />
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Static Image Pathway references in HTML as requested -->
+    <div class="product-grid hidden">
+      <img id="static-logo" src="/images/Logo.jpg" alt="The Avenue Logo" />
+      <article class="product-card" data-product="The Avenue Royal Navy Tuxedo Blazer">
+        <img src="/images/navy_tuxedo_1783186805390.jpg" alt="The Avenue Royal Navy Tuxedo Blazer with intricate design" />
+      </article>
+      <article class="product-card" data-product="Sovereign Plaid Checked Blazer">
+        <img src="/images/plaid_blazer_1783186819820.jpg" alt="Sovereign Plaid Checked Blazer" />
+      </article>
+      <article class="product-card" data-product="Obsidian Jodhpuri Bandhgala">
+        <img src="/images/black_bandhgala_1783186834600.jpg" alt="Obsidian Jodhpuri Bandhgala" />
+      </article>
+      <article class="product-card" data-product="Imperial Tamilnadu Gold-Border Sherwani">
+        <img src="/images/beige_sherwani_1783186848369.jpg" alt="Imperial Tamilnadu Gold-Border Sherwani" />
+      </article>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

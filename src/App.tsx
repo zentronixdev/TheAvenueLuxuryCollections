@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, X, Heart, MessageCircle, Instagram, ShieldCheck, Crown } from "lucide-react";
 
@@ -18,16 +18,39 @@ import Reviews from "./components/Reviews";
 import Faq from "./components/Faq";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
-import VirtualStylist from "./components/VirtualStylist";
-import ConciergePortal from "./components/ConciergePortal";
+
+// Lazy-loaded heavy components for optimal page loading speed
+const VirtualStylist = lazy(() => import("./components/VirtualStylist"));
+const ConciergePortal = lazy(() => import("./components/ConciergePortal"));
+const WishlistModal = lazy(() => import("./components/WishlistModal"));
 
 export default function App() {
   const [isStylistOpen, setIsStylistOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isConciergeOpen, setIsConciergeOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState("all");
   const [preselectedProductName, setPreselectedProductName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("the_avenue_favorites");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const handleToggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((favId) => favId !== id)
+        : [...prev, id];
+      localStorage.setItem("the_avenue_favorites", JSON.stringify(next));
+      return next;
+    });
+  };
 
   // Elegant scroll-reveal section transition variants
   const sectionVariants = {
@@ -64,51 +87,98 @@ export default function App() {
   };
 
   // Premium Instagram Grid Images with Simulated Like Metrics
-  const [instagramFeed, setInstagramFeed] = useState<any[]>([
-    {
-      image: "/assets/images/beige_sherwani_1783186848369.jpg",
-      likes: 1845,
-      comments: 242,
-      tag: "#RoyalSherwani",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    },
-    {
-      image: "/assets/images/black_bandhgala_1783186834600.jpg",
-      likes: 1542,
-      comments: 189,
-      tag: "#MandarinCollar",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    },
-    {
-      image: "/assets/images/navy_tuxedo_1783186805390.jpg",
-      likes: 1624,
-      comments: 211,
-      tag: "#ClassicTuxedo",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    },
-    {
-      image: "/assets/images/plaid_blazer_1783186819820.jpg",
-      likes: 1395,
-      comments: 145,
-      tag: "#PlaidBlazer",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=600&q=80",
-      likes: 1422,
-      comments: 381,
-      tag: "#EmeraldLuxury",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    },
-    {
-      image: "https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?auto=format&fit=crop&w=600&q=80",
-      likes: 1674,
-      comments: 420,
-      tag: "#SovereignBrocade",
-      link: "https://www.instagram.com/theavenueshowroom/"
-    }
-  ]);
-  const [isInstaLoading, setIsInstaLoading] = useState(false);
+  const [instagramFeed, setInstagramFeed] = useState<any[]>(() => {
+    const staticPaths: Record<string, string> = {
+      "The Avenue Royal Navy Tuxedo Blazer": "/images/navy_tuxedo_1783186805390.jpg",
+      "Sovereign Plaid Checked Blazer": "/images/plaid_blazer_1783186819820.jpg",
+      "Obsidian Jodhpuri Bandhgala": "/images/black_bandhgala_1783186834600.jpg",
+      "Imperial Tamilnadu Gold-Border Sherwani": "/images/beige_sherwani_1783186848369.jpg"
+    };
+
+    const getStaticImagePath = (productName: string) => {
+      if (typeof document === "undefined") return staticPaths[productName] || "";
+      const card = document.querySelector(`.product-card[data-product="${productName}"]`);
+      return card?.querySelector("img")?.getAttribute("src") || staticPaths[productName] || "";
+    };
+
+    return [
+      {
+        image: getStaticImagePath("Imperial Tamilnadu Gold-Border Sherwani"),
+        likes: 1845,
+        comments: 242,
+        tag: "#RoyalSherwani",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      },
+      {
+        image: getStaticImagePath("Obsidian Jodhpuri Bandhgala"),
+        likes: 1542,
+        comments: 189,
+        tag: "#MandarinCollar",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      },
+      {
+        image: getStaticImagePath("The Avenue Royal Navy Tuxedo Blazer"),
+        likes: 1624,
+        comments: 211,
+        tag: "#ClassicTuxedo",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      },
+      {
+        image: getStaticImagePath("Sovereign Plaid Checked Blazer"),
+        likes: 1395,
+        comments: 145,
+        tag: "#PlaidBlazer",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      },
+      {
+        image: "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=400&q=70",
+        likes: 1422,
+        comments: 381,
+        tag: "#EmeraldLuxury",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      },
+      {
+        image: "https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?auto=format&fit=crop&w=400&q=70",
+        likes: 1674,
+        comments: 420,
+        tag: "#SovereignBrocade",
+        link: "https://www.instagram.com/theavenueshowroom/"
+      }
+    ];
+  });
+
+  // Ensure image paths are fully synchronized after mount in case of timing delays
+  useEffect(() => {
+    const staticPaths: Record<string, string> = {
+      "The Avenue Royal Navy Tuxedo Blazer": "/images/navy_tuxedo_1783186805390.jpg",
+      "Sovereign Plaid Checked Blazer": "/images/plaid_blazer_1783186819820.jpg",
+      "Obsidian Jodhpuri Bandhgala": "/images/black_bandhgala_1783186834600.jpg",
+      "Imperial Tamilnadu Gold-Border Sherwani": "/images/beige_sherwani_1783186848369.jpg"
+    };
+
+    const getStaticImagePath = (productName: string) => {
+      const card = document.querySelector(`.product-card[data-product="${productName}"]`);
+      return card?.querySelector("img")?.getAttribute("src") || staticPaths[productName] || "";
+    };
+
+    setInstagramFeed(prev => prev.map(post => {
+      if (post.tag === "#RoyalSherwani") {
+        return { ...post, image: getStaticImagePath("Imperial Tamilnadu Gold-Border Sherwani") || post.image };
+      }
+      if (post.tag === "#MandarinCollar") {
+        return { ...post, image: getStaticImagePath("Obsidian Jodhpuri Bandhgala") || post.image };
+      }
+      if (post.tag === "#ClassicTuxedo") {
+        return { ...post, image: getStaticImagePath("The Avenue Royal Navy Tuxedo Blazer") || post.image };
+      }
+      if (post.tag === "#PlaidBlazer") {
+        return { ...post, image: getStaticImagePath("Sovereign Plaid Checked Blazer") || post.image };
+      }
+      return post;
+    }));
+  }, []);
+
+  const [isInstaLoading, setIsInstaLoading] = useState(true);
 
   // Fetch live Instagram metrics on mount and automatically update
   useEffect(() => {
@@ -116,11 +186,20 @@ export default function App() {
     const fetchInstagram = async (isSilent = false) => {
       if (!isSilent) setIsInstaLoading(true);
       try {
-        const res = await fetch("/api/instagram");
-        if (!res.ok) throw new Error("Network status invalid");
-        const data = await res.json();
-        if (active && data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
-          setInstagramFeed(data.posts);
+        // Simulate minor API call response delay
+        await new Promise((resolve) => setTimeout(resolve, isSilent ? 600 : 1800));
+        
+        if (active) {
+          // Fluctuating metric simulation to give the aesthetic feel of a living feed
+          setInstagramFeed(prev => prev.map(post => {
+            const likesDelta = Math.floor(Math.random() * 4);
+            const commentsDelta = Math.random() > 0.7 ? 1 : 0;
+            return {
+              ...post,
+              likes: (typeof post.likes === "number" ? post.likes : 1000) + likesDelta,
+              comments: (typeof post.comments === "number" ? post.comments : 100) + commentsDelta
+            };
+          }));
         }
       } catch (err) {
         console.warn("Could not sync live Instagram feed:", err);
@@ -171,6 +250,8 @@ export default function App() {
         }}
         onOpenConcierge={() => setIsConciergeOpen(true)}
         scrollToSection={scrollToSection}
+        favorites={favorites}
+        onOpenWishlist={() => setIsWishlistOpen(true)}
       />
 
       {/* 2. Full-Screen Cinematic Hero */}
@@ -196,6 +277,8 @@ export default function App() {
             setSelectedCollection(collectionId);
             scrollToSection("gallery");
           }}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
       </motion.div>
 
@@ -212,6 +295,9 @@ export default function App() {
             setPreselectedProductName(productName || "");
             setIsBookingModalOpen(true);
           }}
+          searchQuery={searchQuery}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
         />
       </motion.div>
 
@@ -322,46 +408,64 @@ export default function App() {
 
           {/* Insta Feed Bento Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {instagramFeed.map((post, idx) => (
-              <motion.a
-                key={idx}
-                href={post.link || "https://www.instagram.com/theavenueshowroom/"}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.08 }}
-                className="relative group aspect-square overflow-hidden cursor-pointer border border-white/5 block"
-              >
+            {isInstaLoading ? (
+              Array.from({ length: 6 }).map((_, idx) => (
                 <div
-                  className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{ backgroundImage: `url(${post.image})` }}
-                />
-                
-                {/* Visual Glass Blur Stats on Hover */}
-                <div className="absolute inset-0 bg-neutral-950/70 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-center items-center space-y-3 p-4">
-                  <span className="text-[10px] font-mono font-bold text-gold-accent tracking-wider">
-                    {post.tag}
-                  </span>
-                  
-                  <div className="flex items-center space-x-4 text-white text-xs font-semibold">
-                    <div className="flex items-center space-x-1.5">
-                      <Heart className="w-4 h-4 text-red-accent fill-red-accent" />
-                      <span>{formatLikes(post.likes)}</span>
+                  key={idx}
+                  className="relative aspect-square overflow-hidden bg-[#141414] border border-white/5 animate-pulse flex flex-col justify-between p-5 text-left"
+                >
+                  <div className="w-16 h-3 bg-neutral-800 rounded"></div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-8 h-3.5 bg-neutral-800 rounded-full"></div>
+                      <div className="w-8 h-3.5 bg-neutral-800 rounded-full"></div>
                     </div>
-                    <div className="flex items-center space-x-1.5">
-                      <MessageCircle className="w-4 h-4 text-light-gray/60" />
-                      <span>{post.comments}</span>
-                    </div>
+                    <div className="w-20 h-2 bg-neutral-800/60 rounded"></div>
                   </div>
-
-                  <span className="text-[8px] tracking-widest text-light-gray font-serif uppercase font-bold pt-1">
-                    View On Instagram
-                  </span>
                 </div>
-              </motion.a>
-            ))}
+              ))
+            ) : (
+              instagramFeed.map((post, idx) => (
+                <motion.a
+                  key={idx}
+                  href={post.link || "https://www.instagram.com/theavenueshowroom/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.08 }}
+                  className="relative group aspect-square overflow-hidden cursor-pointer border border-white/5 block"
+                >
+                  <div
+                    className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                    style={{ backgroundImage: `url(${post.image})` }}
+                  />
+                  
+                  {/* Visual Glass Blur Stats on Hover */}
+                  <div className="absolute inset-0 bg-neutral-950/70 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-center items-center space-y-3 p-4">
+                    <span className="text-[10px] font-mono font-bold text-gold-accent tracking-wider">
+                      {post.tag}
+                    </span>
+                    
+                    <div className="flex items-center space-x-4 text-white text-xs font-semibold">
+                      <div className="flex items-center space-x-1.5">
+                        <Heart className="w-4 h-4 text-red-accent fill-red-accent" />
+                        <span>{formatLikes(post.likes)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <MessageCircle className="w-4 h-4 text-light-gray/60" />
+                        <span>{post.comments}</span>
+                      </div>
+                    </div>
+
+                    <span className="text-[8px] tracking-widest text-light-gray font-serif uppercase font-bold pt-1">
+                      View On Instagram
+                    </span>
+                  </div>
+                </motion.a>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -390,11 +494,13 @@ export default function App() {
       <Footer scrollToSection={scrollToSection} />
 
       {/* 13. AI Virtual Stylist Consultation Slide-Over Panel */}
-      <VirtualStylist
-        isOpen={isStylistOpen}
-        onClose={() => setIsStylistOpen(false)}
-        onSelectRecommendedOutfit={handleSelectRecommendedOutfit}
-      />
+      <Suspense fallback={null}>
+        <VirtualStylist
+          isOpen={isStylistOpen}
+          onClose={() => setIsStylistOpen(false)}
+          onSelectRecommendedOutfit={handleSelectRecommendedOutfit}
+        />
+      </Suspense>
 
       {/* 14. Global Appointment Fit Trial Modal Overlay */}
       <AnimatePresence>
@@ -434,10 +540,29 @@ export default function App() {
       </AnimatePresence>
 
       {/* Concierge Portal Slide-Over */}
-      <ConciergePortal
-        isOpen={isConciergeOpen}
-        onClose={() => setIsConciergeOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <ConciergePortal
+          isOpen={isConciergeOpen}
+          onClose={() => setIsConciergeOpen(false)}
+        />
+      </Suspense>
+
+      {/* 15. Wishlist Sidebar Drawer Overlay */}
+      <Suspense fallback={null}>
+        <WishlistModal
+          isOpen={isWishlistOpen}
+          onClose={() => setIsWishlistOpen(false)}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
+          onOpenBooking={(productName) => {
+            setPreselectedProductName(productName || "");
+            setIsBookingModalOpen(true);
+          }}
+          onViewProduct={(product) => {
+            scrollToSection("gallery");
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

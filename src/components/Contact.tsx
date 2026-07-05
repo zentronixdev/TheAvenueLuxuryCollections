@@ -34,25 +34,45 @@ export default function Contact({ initialProductName = "", isModalVariant = fals
     setError(null);
 
     try {
-      const response = await fetch("/api/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      // Simulate slightly elegant network transmission delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const data = await response.json();
+      const newBookingId = `AVE-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newBookingObj = {
+        bookingId: newBookingId,
+        ...formData,
+        qrCode: "FITTING-SUITE-PASS"
+      };
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to book your appointment.");
-      }
+      // Retrieve existing offline DB or seed a blank list
+      const localDBStr = localStorage.getItem("the_avenue_fittings_db");
+      const currentDB = localDBStr ? JSON.parse(localDBStr) : [
+        {
+          bookingId: "AVE-MUH-7738",
+          name: "Prasanna Venkatesan",
+          preferredService: "Imperial Tamilnadu Gold-Border Sherwani - Trial",
+          fittingLocation: "flagship-chennai",
+          date: "2026-07-12",
+          time: "10:30",
+        },
+        {
+          bookingId: "AVE-REC-8902",
+          name: "Rajesh Kannan",
+          preferredService: "The Avenue Royal Navy Tuxedo Blazer - Fitting",
+          fittingLocation: "flagship-chennai",
+          date: "2026-07-15",
+          time: "14:00",
+        }
+      ];
 
-      if (data.bookingId) {
-        localStorage.setItem("latest_avenue_booking_id", data.bookingId);
-      }
+      // Prepend our new booking
+      const updatedDB = [newBookingObj, ...currentDB];
+      localStorage.setItem("the_avenue_fittings_db", JSON.stringify(updatedDB));
+      localStorage.setItem("latest_avenue_booking_id", newBookingId);
 
-      setSuccessData(data);
+      setSuccessData(newBookingObj);
     } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
+      setError("An offline storage error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

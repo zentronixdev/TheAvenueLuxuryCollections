@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Menu, X, Calendar, Phone } from "lucide-react";
+import { Sparkles, Menu, X, Calendar, Phone, Heart } from "lucide-react";
 import Logo from "./Logo";
 
 interface NavbarProps {
@@ -8,9 +8,18 @@ interface NavbarProps {
   onOpenBooking: () => void;
   onOpenConcierge: () => void;
   scrollToSection: (id: string) => void;
+  favorites: string[];
+  onOpenWishlist: () => void;
 }
 
-export default function Navbar({ onOpenStylist, onOpenBooking, onOpenConcierge, scrollToSection }: NavbarProps) {
+export default function Navbar({
+  onOpenStylist,
+  onOpenBooking,
+  onOpenConcierge,
+  scrollToSection,
+  favorites,
+  onOpenWishlist,
+}: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -69,6 +78,20 @@ export default function Navbar({ onOpenStylist, onOpenBooking, onOpenConcierge, 
 
           {/* Desktop Call to Actions */}
           <div className="hidden lg:flex items-center space-x-4">
+            {/* Wishlist Button with Badge */}
+            <button
+              onClick={onOpenWishlist}
+              className="relative p-2.5 bg-white/5 border border-white/10 text-light-gray hover:text-red-accent hover:border-red-accent/40 transition-all duration-300 cursor-pointer flex items-center justify-center group"
+              title="View Wishlist"
+            >
+              <Heart className={`w-3.5 h-3.5 transition-colors ${favorites.length > 0 ? "text-red-accent fill-red-accent" : ""}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-bounce shadow-md">
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+
             {/* AI Virtual Stylist Trigger */}
             <button
               onClick={onOpenStylist}
@@ -89,6 +112,20 @@ export default function Navbar({ onOpenStylist, onOpenBooking, onOpenConcierge, 
 
           {/* Mobile Menu Toggle Button */}
           <div className="flex lg:hidden items-center space-x-3">
+            {/* Wishlist button for mobile */}
+            <button
+              onClick={onOpenWishlist}
+              className="relative p-2 rounded-full bg-white/5 border border-white/10 text-light-gray hover:text-red-accent transition-colors"
+              title="Wishlist"
+            >
+              <Heart className={`w-4 h-4 ${favorites.length > 0 ? "text-red-accent fill-red-accent" : ""}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-accent text-white text-[7px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+
             {/* Minimal Sparkles button for mobile */}
             <button
               onClick={onOpenStylist}
@@ -134,6 +171,18 @@ export default function Navbar({ onOpenStylist, onOpenBooking, onOpenConcierge, 
             </div>
 
             <div className="flex flex-col space-y-3 pt-4">
+              {/* Wishlist Mobile Button */}
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenWishlist();
+                }}
+                className="w-full flex items-center justify-center space-x-2 py-3 bg-white/5 border border-white/10 text-white text-[10px] tracking-[0.2em] uppercase font-medium hover:bg-white/10 transition-colors"
+              >
+                <Heart className={`w-4 h-4 ${favorites.length > 0 ? "text-red-accent fill-red-accent" : ""}`} />
+                <span>Wishlist ({favorites.length})</span>
+              </button>
+
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);

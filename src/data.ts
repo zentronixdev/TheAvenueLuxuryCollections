@@ -1,19 +1,37 @@
 import { Product, Collection, Review, FaqItem } from "./types";
 
+function getStaticImagePath(productName: string): string {
+  const staticPaths: Record<string, string> = {
+    "The Avenue Royal Navy Tuxedo Blazer": "/images/navy_tuxedo_1783186805390.jpg",
+    "Sovereign Plaid Checked Blazer": "/images/plaid_blazer_1783186819820.jpg",
+    "Obsidian Jodhpuri Bandhgala": "/images/black_bandhgala_1783186834600.jpg",
+    "Imperial Tamilnadu Gold-Border Sherwani": "/images/beige_sherwani_1783186848369.jpg"
+  };
+
+  if (typeof document === "undefined") return staticPaths[productName] || "";
+  const card = document.querySelector(`.product-card[data-product="${productName}"]`);
+  const img = card?.querySelector("img");
+  return img?.getAttribute("src") || staticPaths[productName] || "";
+}
+
 export const COLLECTIONS: Collection[] = [
   {
     id: "blazers",
     name: "Blazers",
     tagline: "Dapper Suits & Evening Fits",
     description: "Sleek velvet tuxedos, checkered plaid blazers, and structured Jodhpuri bandhgalas tailored for reception galas and premium celebrations across Tamil Nadu.",
-    coverImage: "/assets/images/navy_tuxedo_1783186805390.jpg",
+    get coverImage() {
+      return getStaticImagePath("The Avenue Royal Navy Tuxedo Blazer");
+    },
   },
   {
     id: "sherwani",
     name: "Royal Sherwanis",
     tagline: "Majestic Groom & Festive Attire",
     description: "Exquisite champagne-gold, embroidered, and royal silks woven to perfection for spectacular Tamil weddings, traditional ceremonies, and grand muhurthams.",
-    coverImage: "/assets/images/beige_sherwani_1783186848369.jpg",
+    get coverImage() {
+      return getStaticImagePath("Imperial Tamilnadu Gold-Border Sherwani");
+    },
   }
 ];
 
@@ -23,7 +41,9 @@ export const PRODUCTS: Product[] = [
     name: "The Avenue Royal Navy Tuxedo Blazer",
     category: "Blazers",
     collectionId: "blazers",
-    image: "/assets/images/navy_tuxedo_1783186805390.jpg",
+    get image() {
+      return getStaticImagePath("The Avenue Royal Navy Tuxedo Blazer");
+    },
     rentPrice: 1200,
     retailValue: 45000,
     availableSizes: ["38", "40", "42", "44", "46"],
@@ -38,7 +58,9 @@ export const PRODUCTS: Product[] = [
     name: "Sovereign Plaid Checked Blazer",
     category: "Blazers",
     collectionId: "blazers",
-    image: "/assets/images/plaid_blazer_1783186819820.jpg",
+    get image() {
+      return getStaticImagePath("Sovereign Plaid Checked Blazer");
+    },
     rentPrice: 1100,
     retailValue: 35000,
     availableSizes: ["38", "40", "42", "44"],
@@ -53,7 +75,9 @@ export const PRODUCTS: Product[] = [
     name: "Obsidian Jodhpuri Bandhgala",
     category: "Blazers",
     collectionId: "blazers",
-    image: "/assets/images/black_bandhgala_1783186834600.jpg",
+    get image() {
+      return getStaticImagePath("Obsidian Jodhpuri Bandhgala");
+    },
     rentPrice: 1300,
     retailValue: 55000,
     availableSizes: ["38", "40", "42", "44", "46"],
@@ -68,7 +92,9 @@ export const PRODUCTS: Product[] = [
     name: "Imperial Tamilnadu Gold-Border Sherwani",
     category: "Sherwani",
     collectionId: "sherwani",
-    image: "/assets/images/beige_sherwani_1783186848369.jpg",
+    get image() {
+      return getStaticImagePath("Imperial Tamilnadu Gold-Border Sherwani");
+    },
     rentPrice: 1500,
     retailValue: 75000,
     availableSizes: ["38", "40", "42", "44"],

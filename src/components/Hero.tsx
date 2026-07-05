@@ -15,7 +15,7 @@ export default function Hero({ onOpenStylist, onOpenBooking, scrollToSection }: 
         <motion.div
           animate={{ scale: [1.05, 1.12, 1.05] }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="w-full h-full bg-[url('https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-40 brightness-50"
+          className="w-full h-full bg-[url('https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=1200&q=65')] bg-cover bg-center opacity-40 brightness-50"
         />
         {/* Dynamic Dark Gradient Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/70 to-transparent" />

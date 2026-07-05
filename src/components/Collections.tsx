@@ -1,13 +1,20 @@
 import { motion } from "motion/react";
 import { COLLECTIONS } from "../data";
-import { Sparkles, ArrowUpRight } from "lucide-react";
+import { Sparkles, ArrowUpRight, Search, X } from "lucide-react";
 
 interface CollectionsProps {
   onSelectCollection: (collectionId: string) => void;
   selectedCollection: string;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
 
-export default function Collections({ onSelectCollection, selectedCollection }: CollectionsProps) {
+export default function Collections({
+  onSelectCollection,
+  selectedCollection,
+  searchQuery,
+  onSearchChange
+}: CollectionsProps) {
   return (
     <section id="collections" className="py-24 bg-dark-base relative overflow-hidden">
       {/* Background visual accents */}
@@ -29,6 +36,28 @@ export default function Collections({ onSelectCollection, selectedCollection }: 
           <p className="max-w-2xl mx-auto text-light-gray font-light text-sm mt-4">
             Explore signature lines hand-tailored for royal grooms, prestigious black-tie galas, and high-fashion wedding festivities.
           </p>
+
+          {/* Premium Real-Time Search Bar */}
+          <div className="max-w-md mx-auto mt-8 relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gold-accent/70" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search by name or category (e.g. Sherwani, Blazer)..."
+              className="w-full pl-10 pr-10 py-3.5 bg-black/60 border border-white/10 text-white placeholder-light-gray/40 text-xs tracking-wider uppercase font-sans focus:outline-none focus:border-gold-accent/50 focus:ring-1 focus:ring-gold-accent/20 transition-all duration-300 rounded-none shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchChange("")}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-light-gray/60 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Collections Bento Grid */}

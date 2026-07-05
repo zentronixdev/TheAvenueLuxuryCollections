@@ -2,19 +2,55 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { PRODUCTS, COLLECTIONS } from "../data";
 import { Product } from "../types";
-import { Star, MessageCircle, Ruler, Calendar, Check, ArrowRight, X, ShieldCheck, Share2, Link, Twitter, Facebook } from "lucide-react";
+import { Star, MessageCircle, Ruler, Calendar, Check, ArrowRight, X, ShieldCheck, Share2, Link, Twitter, Facebook, Heart } from "lucide-react";
 
 interface ProductGalleryProps {
   selectedCollection: string;
   onOpenBooking: (productName?: string) => void;
+  searchQuery?: string;
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
 }
 
-export default function ProductGallery({ selectedCollection, onOpenBooking }: ProductGalleryProps) {
+export default function ProductGallery({
+  selectedCollection,
+  onOpenBooking,
+  searchQuery = "",
+  favorites: propFavorites,
+  onToggleFavorite,
+}: ProductGalleryProps) {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeShareId, setActiveShareId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Fallback to internal state if props are not provided
+  const [internalFavorites, setInternalFavorites] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("the_avenue_favorites");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const activeFavorites = propFavorites || internalFavorites;
+
+  const toggleFavorite = (productId: string) => {
+    if (onToggleFavorite) {
+      onToggleFavorite(productId);
+    } else {
+      setInternalFavorites((prev) => {
+        const next = prev.includes(productId)
+          ? prev.filter((id) => id !== productId)
+          : [...prev, productId];
+        localStorage.setItem("the_avenue_favorites", JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
+  const isFavorite = (productId: string) => activeFavorites.includes(productId);
 
   const handleShare = (platform: "whatsapp" | "twitter" | "facebook" | "copy", product: Product) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?product=${encodeURIComponent(product.id)}`;
@@ -35,9 +71,13 @@ export default function ProductGallery({ selectedCollection, onOpenBooking }: Pr
   };
   
   // Filtering logic
-  const filteredProducts = selectedCollection === "all"
-    ? PRODUCTS
-    : PRODUCTS.filter(p => p.collectionId === selectedCollection);
+  const filteredProducts = PRODUCTS.filter((p) => {
+    const matchesCollection = selectedCollection === "all" || p.collectionId === selectedCollection;
+    const matchesSearch = searchQuery.trim() === "" ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCollection && matchesSearch;
+  });
 
   const activeCollectionName = selectedCollection === "all"
     ? "All Masterpieces"
@@ -176,10 +216,26 @@ export default function ProductGallery({ selectedCollection, onOpenBooking }: Pr
                   </AnimatePresence>
                 </div>
 
+                {/* Elegant Floating Favorite Heart Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(prod.id);
+                  }}
+                  className={`absolute top-[102px] right-4 z-30 p-2 border backdrop-blur-md transition-all duration-300 rounded-none cursor-pointer flex items-center justify-center shadow-lg ${
+                    isFavorite(prod.id)
+                      ? "bg-red-accent border-red-accent text-white hover:bg-red-accent/90"
+                      : "bg-black/70 border-white/10 text-light-gray hover:bg-red-accent hover:border-red-accent hover:text-white"
+                  }`}
+                  title={isFavorite(prod.id) ? "Remove from Favorites" : "Add to Favorites"}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${isFavorite(prod.id) ? "fill-current" : ""}`} />
+                </button>
+
                 {/* Product Image Panel */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-black cursor-pointer" onClick={() => handleOpenDetails(prod)}>
                   <div
-                    className="w-full h-full bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="w-full h-full bg-cover bg-center transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
                     style={{ backgroundImage: `url(${prod.image})` }}
                   />
                   {/* Glass Card Overlay details on Hover */}
@@ -316,42 +372,52 @@ export default function ProductGallery({ selectedCollection, onOpenBooking }: Pr
                       <span className="text-xs text-light-gray font-sans font-semibold ml-2">({selectedProduct.rating} / 5 stars)</span>
                     </div>
 
-                    {/* Social Media Share Actions */}
-                    <div className="flex items-center space-x-1.5 bg-neutral-900 px-2 py-1 border border-white/5">
-                      <span className="text-[9px] tracking-widest text-light-gray/60 uppercase font-sans font-semibold px-1.5">Share:</span>
-                      <button
-                        onClick={() => handleShare("whatsapp", selectedProduct)}
-                        className="p-1 text-light-gray hover:text-emerald-400 transition-colors cursor-pointer"
-                        title="Share on WhatsApp"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleShare("twitter", selectedProduct)}
-                        className="p-1 text-light-gray hover:text-sky-400 transition-colors cursor-pointer"
-                        title="Share on X (Twitter)"
-                      >
-                        <Twitter className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleShare("facebook", selectedProduct)}
-                        className="p-1 text-light-gray hover:text-blue-400 transition-colors cursor-pointer"
-                        title="Share on Facebook"
-                      >
-                        <Facebook className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleShare("copy", selectedProduct)}
-                        className="p-1 text-light-gray hover:text-gold-accent transition-colors cursor-pointer"
-                        title="Copy Link"
-                      >
-                        {copiedId === selectedProduct.id ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                          <Link className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
+                     {/* Social Media Share Actions & Favorite Button */}
+                     <div className="flex items-center space-x-1.5 bg-neutral-900 px-2 py-1 border border-white/5">
+                       <span className="text-[9px] tracking-widest text-light-gray/60 uppercase font-sans font-semibold px-1.5 border-r border-white/5 mr-1 flex items-center gap-1.5">
+                         <button
+                           onClick={() => toggleFavorite(selectedProduct.id)}
+                           className="focus:outline-none transition-transform active:scale-95"
+                           title={isFavorite(selectedProduct.id) ? "Remove from Favorites" : "Add to Favorites"}
+                         >
+                           <Heart className={`w-3.5 h-3.5 inline-block ${isFavorite(selectedProduct.id) ? "text-red-accent fill-red-accent" : "text-light-gray hover:text-red-accent"}`} />
+                         </button>
+                         <span className="text-[8px] text-light-gray/40">|</span>
+                         <span>Share:</span>
+                       </span>
+                       <button
+                         onClick={() => handleShare("whatsapp", selectedProduct)}
+                         className="p-1 text-light-gray hover:text-emerald-400 transition-colors cursor-pointer"
+                         title="Share on WhatsApp"
+                       >
+                         <MessageCircle className="w-3.5 h-3.5" />
+                       </button>
+                       <button
+                         onClick={() => handleShare("twitter", selectedProduct)}
+                         className="p-1 text-light-gray hover:text-sky-400 transition-colors cursor-pointer"
+                         title="Share on X (Twitter)"
+                       >
+                         <Twitter className="w-3.5 h-3.5" />
+                       </button>
+                       <button
+                         onClick={() => handleShare("facebook", selectedProduct)}
+                         className="p-1 text-light-gray hover:text-blue-400 transition-colors cursor-pointer"
+                         title="Share on Facebook"
+                       >
+                         <Facebook className="w-3.5 h-3.5" />
+                       </button>
+                       <button
+                         onClick={() => handleShare("copy", selectedProduct)}
+                         className="p-1 text-light-gray hover:text-gold-accent transition-colors cursor-pointer"
+                         title="Copy Link"
+                       >
+                         {copiedId === selectedProduct.id ? (
+                           <Check className="w-3.5 h-3.5 text-emerald-500" />
+                         ) : (
+                           <Link className="w-3.5 h-3.5" />
+                         )}
+                       </button>
+                     </div>
                   </div>
 
                   <p className="text-light-gray font-sans text-sm font-light leading-relaxed mb-6">
